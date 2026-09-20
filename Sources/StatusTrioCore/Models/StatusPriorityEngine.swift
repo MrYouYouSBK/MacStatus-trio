@@ -60,7 +60,7 @@ enum StatusPriorityEngine {
 
         switch wifi.state {
         case .notAssociated, .noInternet, .off, .unavailable:
-            return connection == .wifi
+            return true
         case .connected, .hotspot, .temporary, .shared:
             return false
         }
