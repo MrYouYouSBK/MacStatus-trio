@@ -63,7 +63,7 @@ final class StatusPriorityEngineTests: XCTestCase {
             id: 1,
             name: "AirPods",
             transport: .bluetooth,
-            isDefault: true
+            isCurrent: true
         )
     }
 }
