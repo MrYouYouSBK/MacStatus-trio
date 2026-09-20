@@ -5,8 +5,8 @@
 - [ ] Define owned bundle identifier and migration plan.
 - [ ] Move Sparkle feed and signing keys under Project S ownership.
 - [ ] Preserve Apache-2.0 attribution and NOTICE.
-- [ ] Build Status Priority Engine.
-- [ ] Normalize system signals into one Status Snapshot.
+- [x] Build Status Priority Engine.
+- [~] Normalize system signals into one Status Snapshot — center-signal priority is now centralized; wider signal normalization remains.
 - [ ] Add network-quality contract without turning Trio into a full network tool.
 - [ ] Verify signed + notarized install and update flow.
 
