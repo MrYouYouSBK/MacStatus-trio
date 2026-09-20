@@ -29,8 +29,12 @@ enum StatusPriorityEngine {
             return .network
         }
 
+        let networkHealth = NetworkHealth.derive(
+            wifi: wifi,
+            connection: connection
+        )
         if bluetoothAudioOptions.prioritizesNetworkErrors,
-           hasNetworkError(wifi: wifi, connection: connection) {
+           networkHealth.requiresAttention {
             return .network
         }
 
@@ -52,17 +56,4 @@ enum StatusPriorityEngine {
         )
     }
 
-    private static func hasNetworkError(
-        wifi: WiFiStatus,
-        connection: NetworkConnection
-    ) -> Bool {
-        if connection == .offline { return true }
-
-        switch wifi.state {
-        case .notAssociated, .noInternet, .off, .unavailable:
-            return true
-        case .connected, .hotspot, .temporary, .shared:
-            return false
-        }
-    }
 }
