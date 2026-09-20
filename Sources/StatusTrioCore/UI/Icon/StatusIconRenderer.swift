@@ -258,13 +258,12 @@ enum StatusIconRenderer {
             foreground: foreground,
             criticalColor: criticalColor
         )
-        if let currentDevice = menuBarStatus.volume.currentDevice,
-           StatusMappings.shouldReplaceNetworkIcon(
-               currentDevice: currentDevice,
-               wifi: menuBarStatus.wifi,
-               connection: menuBarStatus.connection,
-               options: bluetoothAudioOptions
-           ) {
+        let priority = StatusPriorityEngine.decide(
+            status: menuBarStatus,
+            bluetoothAudioOptions: bluetoothAudioOptions
+        )
+        if priority.centerSignal == .bluetoothAudio,
+           let currentDevice = menuBarStatus.volume.currentDevice {
             drawBluetoothAudioDevice(
                 currentDevice,
                 options: bluetoothAudioOptions,
