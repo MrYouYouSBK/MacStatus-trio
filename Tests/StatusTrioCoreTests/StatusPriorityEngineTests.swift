@@ -62,8 +62,8 @@ final class StatusPriorityEngineTests: XCTestCase {
         AudioOutputDevice(
             id: 1,
             name: "AirPods",
-            transport: .bluetooth,
-            isCurrent: true
+            isCurrent: true,
+            transport: .bluetooth
         )
     }
 }
