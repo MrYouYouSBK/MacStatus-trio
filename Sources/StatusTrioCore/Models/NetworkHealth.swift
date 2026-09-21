@@ -12,7 +12,7 @@ struct NetworkHealth: Equatable, Sendable {
     let state: NetworkHealthState
     let connection: NetworkConnection
     let latencyMilliseconds: Double?
-    let packetLossPercent: Double?
+    let probeFailurePercent: Double?
 
     var requiresAttention: Bool {
         switch state {
@@ -27,12 +27,14 @@ struct NetworkHealth: Equatable, Sendable {
         wifi: WiFiStatus,
         connection: NetworkConnection,
         latencyMilliseconds: Double? = nil,
-        packetLossPercent: Double? = nil
+        probeFailurePercent: Double? = nil
     ) -> NetworkHealth {
-        let state: NetworkHealthState
+        var state: NetworkHealthState
 
         if connection == .offline {
             state = .offline
+        } else if connection == .ethernet || connection == .other {
+            state = .healthy
         } else {
             switch wifi.state {
             case .connected, .hotspot, .temporary, .shared:
@@ -44,11 +46,19 @@ struct NetworkHealth: Equatable, Sendable {
             }
         }
 
+        if state == .healthy {
+            if let failure = probeFailurePercent, failure >= 50 {
+                state = .degraded
+            } else if let latency = latencyMilliseconds, latency >= 750 {
+                state = .degraded
+            }
+        }
+
         return NetworkHealth(
             state: state,
             connection: connection,
             latencyMilliseconds: latencyMilliseconds,
-            packetLossPercent: packetLossPercent
+            probeFailurePercent: probeFailurePercent
         )
     }
 }
