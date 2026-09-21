@@ -20,6 +20,7 @@ enum StatusPriorityEngine {
         currentDevice: AudioOutputDevice?,
         wifi: WiFiStatus,
         connection: NetworkConnection,
+        networkHealth: NetworkHealth? = nil,
         bluetoothAudioOptions: BluetoothAudioIconOptions
     ) -> StatusPriorityDecision {
         let isBluetoothOutput = currentDevice?.transport == .bluetooth
@@ -29,12 +30,12 @@ enum StatusPriorityEngine {
             return .network
         }
 
-        let networkHealth = NetworkHealth.derive(
+        let resolvedNetworkHealth = networkHealth ?? NetworkHealth.derive(
             wifi: wifi,
             connection: connection
         )
         if bluetoothAudioOptions.prioritizesNetworkErrors,
-           networkHealth.requiresAttention {
+           resolvedNetworkHealth.requiresAttention {
             return .network
         }
 
@@ -52,6 +53,7 @@ enum StatusPriorityEngine {
             currentDevice: status.volume.currentDevice,
             wifi: status.wifi,
             connection: status.connection,
+            networkHealth: status.networkHealth,
             bluetoothAudioOptions: bluetoothAudioOptions
         )
     }
