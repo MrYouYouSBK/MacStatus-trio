@@ -6,8 +6,8 @@
 - [ ] Move Sparkle feed and signing keys under Project S ownership.
 - [ ] Preserve Apache-2.0 attribution and NOTICE.
 - [x] Build Status Priority Engine.
-- [~] Normalize system signals into one Status Snapshot — center-signal priority is now centralized; wider signal normalization remains.
-- [ ] Add network-quality contract without turning Trio into a full network tool.
+- [~] Normalize system signals into one Status Snapshot — center priority + NetworkHealth are centralized; Battery/Audio normalization remains.
+- [x] Add privacy-first network-quality contract + active probe (latency/probe failure only while Popover/Settings is visible).
 - [ ] Verify signed + notarized install and update flow.
 
 ## P1
