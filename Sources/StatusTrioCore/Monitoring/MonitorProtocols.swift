@@ -34,6 +34,16 @@ protocol NetworkConnectionMonitoring: AnyObject {
 }
 
 @MainActor
+protocol NetworkQualityMonitoring: AnyObject {
+    var updates: AsyncStream<NetworkQualitySample> { get }
+    func start()
+    func stop()
+    func refresh()
+    func recover()
+    func setDetailsVisible(_ visible: Bool)
+}
+
+@MainActor
 protocol VolumeMonitoring: AnyObject {
     var updates: AsyncStream<VolumeStatus> { get }
     func start()

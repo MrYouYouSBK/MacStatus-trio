@@ -33,12 +33,14 @@ struct MenuBarStatus: Equatable, Sendable {
     let wifi: WiFiStatus
     let connection: NetworkConnection
     let volume: MenuBarVolumeStatus
+    let networkHealth: NetworkHealth
 
     init(
         battery: BatteryStatus,
         wifi: WiFiStatus,
         connection: NetworkConnection,
-        volume: MenuBarVolumeStatus
+        volume: MenuBarVolumeStatus,
+        networkHealth: NetworkHealth? = nil
     ) {
         self.battery = battery
         // The frequency band is popover-only metadata, not an icon input.
@@ -46,6 +48,10 @@ struct MenuBarStatus: Equatable, Sendable {
                                ssid: wifi.ssid, nameAccess: wifi.nameAccess)
         self.connection = connection
         self.volume = volume
+        self.networkHealth = networkHealth ?? NetworkHealth.derive(
+            wifi: wifi,
+            connection: connection
+        )
     }
 
     init(snapshot: StatusSnapshot) {
@@ -53,7 +59,8 @@ struct MenuBarStatus: Equatable, Sendable {
             battery: snapshot.battery,
             wifi: snapshot.wifi,
             connection: snapshot.connection,
-            volume: MenuBarVolumeStatus(volume: snapshot.volume)
+            volume: MenuBarVolumeStatus(volume: snapshot.volume),
+            networkHealth: snapshot.networkHealth
         )
     }
 

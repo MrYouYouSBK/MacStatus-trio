@@ -26,14 +26,28 @@ struct BatteryDetails: Equatable, Sendable {
     var adapterWatts: Int?
     var remainingMinutes: Int?
     var cycleCount: Int?
+    var maximumCapacity: Int?
+    var designCapacity: Int?
+    var healthPercent: Int?
     var power: BatteryPowerSample?
     var powerAvailability: PowerAvailability
 
-    init(adapterWatts: Int? = nil, remainingMinutes: Int? = nil, cycleCount: Int? = nil,
-         power: BatteryPowerSample? = nil, powerAvailability: PowerAvailability = .unavailable) {
+    init(
+        adapterWatts: Int? = nil,
+        remainingMinutes: Int? = nil,
+        cycleCount: Int? = nil,
+        maximumCapacity: Int? = nil,
+        designCapacity: Int? = nil,
+        healthPercent: Int? = nil,
+        power: BatteryPowerSample? = nil,
+        powerAvailability: PowerAvailability = .unavailable
+    ) {
         self.adapterWatts = adapterWatts
         self.remainingMinutes = remainingMinutes
         self.cycleCount = cycleCount
+        self.maximumCapacity = maximumCapacity
+        self.designCapacity = designCapacity
+        self.healthPercent = healthPercent
         self.power = power
         self.powerAvailability = powerAvailability
     }
@@ -81,11 +95,24 @@ struct BatteryDetailsReader: Sendable {
         state: BatteryPowerState, now: Date, notBefore: Date? = nil
     ) -> BatteryDetails {
         guard state.isPresent else { return BatteryDetails(powerAvailability: .unavailable) }
+        let maximumCapacity = validCapacity(registry["MaxCapacity"])
+            ?? validCapacity(registry["AppleRawMaxCapacity"])
+        let designCapacity = validCapacity(registry["DesignCapacity"])
+        let healthPercent: Int? = {
+            guard let maximumCapacity, let designCapacity, designCapacity > 0 else { return nil }
+            let ratio = Double(maximumCapacity) / Double(designCapacity) * 100
+            guard ratio.isFinite, (1...150).contains(ratio) else { return nil }
+            return Int(ratio.rounded())
+        }()
+
         var result = BatteryDetails(
             adapterWatts: state.isConnected ? adapterWatts.flatMap { $0 > 0 ? $0 : nil } : nil,
             remainingMinutes: !state.isConnected && remainingSeconds.isFinite && remainingSeconds >= 60
                 && remainingSeconds < Double(Int.max) ? Int(remainingSeconds / 60) : nil,
-            cycleCount: (registry["CycleCount"] as? Int).flatMap { $0 >= 0 ? $0 : nil }
+            cycleCount: (registry["CycleCount"] as? Int).flatMap { $0 >= 0 ? $0 : nil },
+            maximumCapacity: maximumCapacity,
+            designCapacity: designCapacity,
+            healthPercent: healthPercent
         )
         guard let millivolts = (registry["Voltage"] as? NSNumber)?.doubleValue,
               let current = registry["Amperage"] as? NSNumber,
@@ -127,6 +154,15 @@ struct BatteryDetailsReader: Sendable {
         result.power = sample
         result.powerAvailability = .available
         return result
+    }
+
+    private static func validCapacity(_ value: Any?) -> Int? {
+        guard let number = value as? NSNumber,
+              CFGetTypeID(number) != CFBooleanGetTypeID() else {
+            return nil
+        }
+        let capacity = number.intValue
+        return (100...50_000).contains(capacity) ? capacity : nil
     }
 
     private static func collecting(_ details: inout BatteryDetails) -> BatteryDetails {

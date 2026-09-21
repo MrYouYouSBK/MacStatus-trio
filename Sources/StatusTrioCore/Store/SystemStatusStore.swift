@@ -18,6 +18,7 @@ final class SystemStatusStore: ObservableObject {
     private let batteryMonitor: any BatteryMonitoring
     private let wifiMonitor: any WiFiMonitoring
     private let connectionMonitor: (any NetworkConnectionMonitoring)?
+    private let networkQualityMonitor: (any NetworkQualityMonitoring)?
     private let volumeMonitor: any VolumeMonitoring
     private let volumeController: (any VolumeControlling)?
     private var refreshInterval: Duration
@@ -42,6 +43,7 @@ final class SystemStatusStore: ObservableObject {
         batteryMonitor: any BatteryMonitoring,
         wifiMonitor: any WiFiMonitoring,
         connectionMonitor: (any NetworkConnectionMonitoring)? = nil,
+        networkQualityMonitor: (any NetworkQualityMonitoring)? = nil,
         volumeMonitor: any VolumeMonitoring,
         refreshInterval: Duration = .seconds(5),
         nameResolutionTimeout: Duration = .milliseconds(1500),
@@ -60,6 +62,7 @@ final class SystemStatusStore: ObservableObject {
         self.batteryMonitor = batteryMonitor
         self.wifiMonitor = wifiMonitor
         self.connectionMonitor = connectionMonitor
+        self.networkQualityMonitor = networkQualityMonitor
         self.volumeMonitor = volumeMonitor
         self.volumeController = volumeMonitor as? any VolumeControlling
         self.refreshInterval = refreshInterval
@@ -105,11 +108,13 @@ final class SystemStatusStore: ObservableObject {
         batteryMonitor.start()
         wifiMonitor.start()
         connectionMonitor?.start()
+        networkQualityMonitor?.start()
         volumeMonitor.start()
 
         let batteryUpdates = batteryMonitor.updates
         let wifiUpdates = wifiMonitor.updates
         let connectionUpdates = connectionMonitor?.updates
+        let networkQualityUpdates = networkQualityMonitor?.updates
         let volumeUpdates = volumeMonitor.updates
         var tasks = [
             Task { [weak self] in
@@ -136,6 +141,14 @@ final class SystemStatusStore: ObservableObject {
                 for await value in connectionUpdates {
                     guard let self else { return }
                     self.applyConnection(value)
+                }
+            })
+        }
+        if let networkQualityUpdates {
+            tasks.append(Task { [weak self] in
+                for await value in networkQualityUpdates {
+                    guard let self else { return }
+                    self.applyNetworkQuality(value)
                 }
             })
         }
@@ -168,6 +181,7 @@ final class SystemStatusStore: ObservableObject {
         batteryMonitor.stop()
         wifiMonitor.stop()
         connectionMonitor?.stop()
+        networkQualityMonitor?.stop()
         volumeMonitor.stop()
         monitorTasks.forEach { $0.cancel() }
         monitorTasks.removeAll()
@@ -322,6 +336,7 @@ final class SystemStatusStore: ObservableObject {
         guard !hasStopped else { return }
         batteryMonitor.refresh()
         wifiMonitor.refresh()
+        networkQualityMonitor?.refresh()
         volumeMonitor.refresh()
     }
 
@@ -329,12 +344,14 @@ final class SystemStatusStore: ObservableObject {
         batteryMonitor.recover()
         wifiMonitor.recover()
         connectionMonitor?.recover()
+        networkQualityMonitor?.recover()
         volumeMonitor.recover()
     }
 
     private func updateDetailsVisibility() {
         let detailsVisible = isPopoverVisible || isSettingsVisible
         wifiMonitor.setDetailsVisible(isPopoverVisible)
+        networkQualityMonitor?.setDetailsVisible(detailsVisible)
         volumeMonitor.setDetailsVisible(detailsVisible)
     }
 
@@ -349,6 +366,16 @@ final class SystemStatusStore: ObservableObject {
 
     private func applyConnection(_ value: NetworkConnection) {
         publish(snapshot.replacingConnection(value))
+    }
+
+    private func applyNetworkQuality(_ value: NetworkQualitySample) {
+        let health = NetworkHealth.derive(
+            wifi: snapshot.wifi,
+            connection: snapshot.connection,
+            latencyMilliseconds: value.latencyMilliseconds,
+            probeFailurePercent: value.probeFailurePercent
+        )
+        publish(snapshot.replacingNetworkHealth(health))
     }
 
     private func applyVolume(_ value: VolumeStatus) {
@@ -447,18 +474,62 @@ private extension VolumeStatus {
 
 private extension StatusSnapshot {
     func replacingBattery(_ value: BatteryStatus) -> StatusSnapshot {
-        StatusSnapshot(battery: value, wifi: wifi, connection: connection, volume: volume)
+        StatusSnapshot(
+            battery: value,
+            wifi: wifi,
+            connection: connection,
+            volume: volume,
+            networkHealth: networkHealth
+        )
     }
 
     func replacingWiFi(_ value: WiFiStatus) -> StatusSnapshot {
-        StatusSnapshot(battery: battery, wifi: value, connection: connection, volume: volume)
+        StatusSnapshot(
+            battery: battery,
+            wifi: value,
+            connection: connection,
+            volume: volume,
+            networkHealth: NetworkHealth.derive(
+                wifi: value,
+                connection: connection,
+                latencyMilliseconds: networkHealth.latencyMilliseconds,
+                probeFailurePercent: networkHealth.probeFailurePercent
+            )
+        )
     }
 
     func replacingConnection(_ value: NetworkConnection) -> StatusSnapshot {
-        StatusSnapshot(battery: battery, wifi: wifi, connection: value, volume: volume)
+        StatusSnapshot(
+            battery: battery,
+            wifi: wifi,
+            connection: value,
+            volume: volume,
+            networkHealth: NetworkHealth.derive(
+                wifi: wifi,
+                connection: value,
+                latencyMilliseconds: networkHealth.latencyMilliseconds,
+                probeFailurePercent: networkHealth.probeFailurePercent
+            )
+        )
     }
 
     func replacingVolume(_ value: VolumeStatus) -> StatusSnapshot {
-        StatusSnapshot(battery: battery, wifi: wifi, connection: connection, volume: value)
+        StatusSnapshot(
+            battery: battery,
+            wifi: wifi,
+            connection: connection,
+            volume: value,
+            networkHealth: networkHealth
+        )
+    }
+
+    func replacingNetworkHealth(_ value: NetworkHealth) -> StatusSnapshot {
+        StatusSnapshot(
+            battery: battery,
+            wifi: wifi,
+            connection: connection,
+            volume: volume,
+            networkHealth: value
+        )
     }
 }

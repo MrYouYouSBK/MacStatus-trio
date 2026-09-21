@@ -58,6 +58,12 @@ struct BatteryDetailsView: View {
                         Duration.seconds($0 * 60).formatted(.units(allowed: [.hours, .minutes], width: .abbreviated).locale(localization.resolvedLanguage.locale))
                     } ?? localization.string(.batteryDetailsUnavailable))
                 }
+                if let health = details.healthPercent {
+                    row(
+                        .batteryDetailsHealth,
+                        health.formatted(.number.locale(localization.resolvedLanguage.locale)) + "%"
+                    )
+                }
                 if let count = details.cycleCount {
                     row(.batteryDetailsCycles, count.formatted(.number.locale(localization.resolvedLanguage.locale)))
                 }

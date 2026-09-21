@@ -137,17 +137,23 @@ struct StatusSnapshot: Equatable, Sendable {
     let wifi: WiFiStatus
     let connection: NetworkConnection
     let volume: VolumeStatus
+    let networkHealth: NetworkHealth
 
     init(
         battery: BatteryStatus,
         wifi: WiFiStatus,
         connection: NetworkConnection = .unknown,
-        volume: VolumeStatus
+        volume: VolumeStatus,
+        networkHealth: NetworkHealth? = nil
     ) {
         self.battery = battery
         self.wifi = wifi
         self.connection = connection
         self.volume = volume
+        self.networkHealth = networkHealth ?? NetworkHealth.derive(
+            wifi: wifi,
+            connection: connection
+        )
     }
 
     static let placeholder = StatusSnapshot(

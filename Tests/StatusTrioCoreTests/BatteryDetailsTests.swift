@@ -79,6 +79,41 @@ final class BatteryDetailsTests: XCTestCase {
         XCTAssertEqual(parse(values).powerAvailability, .collecting)
     }
 
+    func testCapacityTelemetryDerivesBatteryHealth() {
+        var values = registry
+        values["MaxCapacity"] = 4_200
+        values["DesignCapacity"] = 5_000
+        let details = parse(values)
+
+        XCTAssertEqual(details.maximumCapacity, 4_200)
+        XCTAssertEqual(details.designCapacity, 5_000)
+        XCTAssertEqual(details.healthPercent, 84)
+    }
+
+    func testCapacityHealthFailsClosedForMissingOrImplausibleValues() {
+        var missingDesign = registry
+        missingDesign["MaxCapacity"] = 4_200
+        XCTAssertNil(parse(missingDesign).healthPercent)
+
+        var tooHigh = registry
+        tooHigh["MaxCapacity"] = 20_000
+        tooHigh["DesignCapacity"] = 5_000
+        XCTAssertNil(parse(tooHigh).healthPercent)
+
+        var tooSmall = registry
+        tooSmall["MaxCapacity"] = 50
+        tooSmall["DesignCapacity"] = 5_000
+        XCTAssertNil(parse(tooSmall).maximumCapacity)
+        XCTAssertNil(parse(tooSmall).healthPercent)
+    }
+
+    func testRawMaxCapacityIsUsedAsFallback() {
+        var values = registry
+        values["AppleRawMaxCapacity"] = 4_000
+        values["DesignCapacity"] = 5_000
+        XCTAssertEqual(parse(values).healthPercent, 80)
+    }
+
     func testAvailablePowerReportsAvailable() {
         XCTAssertEqual(parse(registry).powerAvailability, .available)
     }

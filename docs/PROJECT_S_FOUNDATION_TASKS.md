@@ -1,0 +1,20 @@
+# Project S Foundation Tasks — Trio
+
+## P0
+- [ ] Confirm final Project S product name.
+- [ ] Define owned bundle identifier and migration plan.
+- [ ] Move Sparkle feed and signing keys under Project S ownership.
+- [ ] Preserve Apache-2.0 attribution and NOTICE.
+- [x] Build Status Priority Engine.
+- [~] Normalize system signals into one Status Snapshot — center priority + NetworkHealth are centralized; Battery/Audio normalization remains.
+- [x] Add privacy-first network-quality contract + active probe (latency/probe failure only while Popover/Settings is visible).
+- [ ] Verify signed + notarized install and update flow.
+
+## P1
+- [~] Battery intelligence — cycle count, runtime, live power and best-effort capacity health are available on demand; drain anomaly/history remains.
+- [ ] Audio-output classification.
+- [ ] Profiles.
+- [ ] Lightweight history.
+
+## Exit gate
+Foundation is complete only when identity/update ownership is Project S-controlled and menu bar/Dock/popover share one normalized status decision model.
