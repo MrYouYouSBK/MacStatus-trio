@@ -25,20 +25,20 @@ final class NetworkHealthTests: XCTestCase {
             wifi: WiFiStatus(state: .connected, rssi: -45),
             connection: .wifi,
             latencyMilliseconds: 18,
-            packetLossPercent: 0
+            probeFailurePercent: 0
         )
         XCTAssertEqual(health.state, .healthy)
         XCTAssertFalse(health.requiresAttention)
         XCTAssertEqual(health.latencyMilliseconds, 18)
-        XCTAssertEqual(health.packetLossPercent, 0)
+        XCTAssertEqual(health.probeFailurePercent, 0)
     }
 
-    func testUnavailableWifiKeepsNetworkPriorityForCompatibility() {
+    func testEthernetIsHealthyWhenWifiIsUnavailable() {
         let health = NetworkHealth.derive(
             wifi: WiFiStatus(state: .unavailable, rssi: nil),
             connection: .ethernet
         )
-        XCTAssertEqual(health.state, .unavailable)
-        XCTAssertTrue(health.requiresAttention)
+        XCTAssertEqual(health.state, .healthy)
+        XCTAssertFalse(health.requiresAttention)
     }
 }
