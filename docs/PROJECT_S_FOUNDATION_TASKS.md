@@ -11,7 +11,7 @@
 - [ ] Verify signed + notarized install and update flow.
 
 ## P1
-- [ ] Battery intelligence.
+- [~] Battery intelligence — cycle count, runtime, live power and best-effort capacity health are available on demand; drain anomaly/history remains.
 - [ ] Audio-output classification.
 - [ ] Profiles.
 - [ ] Lightweight history.
